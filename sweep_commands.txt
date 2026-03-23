@@ -1,6 +1,0 @@
-# Branch predictor sweep across all microbenchmarks
-# Runs one job per (benchmark x bp_type) combination in parallel
-# using all 8 SLURM-allocated cores.
-#
-# Results land in: results/X86/bp_sweep/<benchmark>/<bp_type>/
-python3 launch.py 8 --bp-types none local bimode tage_base multi_branch

@@ -93,7 +93,7 @@ if __name__ == "__main__":
     # Build job list — one job per (benchmark x bp_type) combination
     jobs = []
     for bm in bm_list:
-        bench_path = os.path.join(args.micro_dir, bm, args.bench_bin_name)
+        bench_path = os.path.abspath(os.path.join(args.micro_dir, bm, args.bench_bin_name))
         for bp in args.bp_types:
             outdir = os.path.join(args.out_root, bm, bp)
             params = (
@@ -101,10 +101,10 @@ if __name__ == "__main__":
                 f"--bp_type={bp}",
             )
             run = gem5Run.createSERun(
-                name=f"{bm}_{bp}",
-                gem5_binary=args.gem5_bin,
-                run_script=args.run_script,
-                outdir=outdir,
+                f"{bm}_{bp}",
+                args.gem5_bin,
+                args.run_script,
+                outdir,
                 *params,
                 timeout=args.timeout,
             )
