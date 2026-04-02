@@ -12,6 +12,7 @@
 import m5
 from m5.objects import *
 import argparse
+from m5.objects import MarkovLVP
 
 # ---------------------------------------------------------------------------
 # Memory — 0ns latency so memory never contributes to stall cycles
@@ -119,6 +120,16 @@ class BaseTestSystem(System):
         self.mem       = InfMemory()
         self.mem.range = self.mem_ranges[0]
         self.mem.port  = self.membus.mem_side_ports
+
+        # --- Markov Load Value Predictor ---
+        # Instantiated as a SimObject child so gem5 registers its stats
+        # under system.lvp.* in stats.txt
+        self.lvp = MarkovLVP(
+            table_size     = 4096,
+            context_depth  = 1,    # sweep to 2 and 3 later
+            conf_threshold = 2,
+            max_conf       = 7,
+        )
 
         # X86 interrupt controller ports
         self.cpu.createInterruptController()

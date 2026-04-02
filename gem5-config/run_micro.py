@@ -98,6 +98,14 @@ parser.add_argument("--bp_type",
                     help="Branch predictor type (default: multi_branch)")
 parser.add_argument("--max_insts", type=int, default=1_000_000,
                     help="Max instructions to simulate (default: 1M)")
+parser.add_argument("--lvp",
+                    action="store_true",
+                    default=False,
+                    help="Enable Markov Load Value Predictor")
+parser.add_argument("--lvp_context_depth", type=int, default=1,
+                    help="LVP context depth (1=last-value, 2=2nd-order)")
+parser.add_argument("--lvp_table_size", type=int, default=4096,
+                    help="LVP Markov table size (power of 2)")
 args = parser.parse_args()
 
 # ---------------------------------------------------------------------------
@@ -108,6 +116,9 @@ class MySystem(BaseTestSystem):
     _BranchPredictorType = args.bp_type
 
 system = MySystem()
+if args.lvp:
+    system.lvp.context_depth = args.lvp_context_depth
+    system.lvp.table_size    = args.lvp_table_size
 system.setTestBinary(args.binary)
 system.cpu.max_insts_any_thread = args.max_insts
 
@@ -129,3 +140,19 @@ print("Performance statistics:")
 print("  Simulated time : %.6f s"  % ((end_tick  - start_tick)  / 1e12))
 print("  Instructions   : %d"      %  (end_insts - start_insts))
 print("  Wallclock time : %.2f s"  %  (time.time() - globalStart))
+
+if args.lvp:
+    try:
+        predicted  = int(system.lvp.predicted.value())
+        correct    = int(system.lvp.correct.value())
+        incorrect  = int(system.lvp.incorrect.value())
+        total      = int(system.lvp.totalLoads.value())
+        accuracy   = (correct / predicted * 100) if predicted > 0 else 0.0
+        coverage   = (predicted / total    * 100) if total    > 0 else 0.0
+        print("\nLVP statistics:")
+        print(f"  Total loads    : {total}")
+        print(f"  Predicted      : {predicted}  ({coverage:.1f}% coverage)")
+        print(f"  Correct        : {correct}   ({accuracy:.1f}% accuracy)")
+        print(f"  Incorrect      : {incorrect}")
+    except Exception as e:
+        print(f"  (LVP stats unavailable: {e})")
