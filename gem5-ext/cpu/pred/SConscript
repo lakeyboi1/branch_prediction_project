@@ -1,4 +1,0 @@
-Import('*')
-
-Source('multi_branch.cc')
-SimObject('BranchPredictor.py', sim_objects=['MultiBranchPredictor'])
