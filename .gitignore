@@ -1,6 +1,7 @@
 *.pyc
 m5out
 .vscode
+.DS_Store
 results
 plots
 venv

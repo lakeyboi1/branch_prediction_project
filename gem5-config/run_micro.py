@@ -7,6 +7,9 @@ from m5.objects import *
 from m5.objects import MarkovLVP
 from system import BaseTestSystem
 
+# ---------------------------------------------------------------------------
+# Functional unit pool
+# ---------------------------------------------------------------------------
 class IntALU(FUDesc):
     opList = [OpDesc(opClass='IntAlu', opLat=1)]
     count = 16
@@ -62,6 +65,9 @@ class Ideal_FUPool(FUPool):
     FUList = [IntALU(), IntMultDiv(), FP_ALU(), FP_MultDiv(),
               SIMD_Unit(), MemPort()]
 
+# ---------------------------------------------------------------------------
+# CPU without value predictor (uses BaseO3CPU default MarkovLVP)
+# ---------------------------------------------------------------------------
 class WideO3CPU(DerivO3CPU):
     fetchWidth       = 16
     decodeWidth      = 16
@@ -82,14 +88,11 @@ class WideO3CPU(DerivO3CPU):
 # ---------------------------------------------------------------------------
 # CPU with Markov value predictor explicitly enabled
 # ---------------------------------------------------------------------------
-class WideO3CPUWithVP(WideO3CPU):
-    value_pred = MarkovLVP(
-        table_size      = 4096,
-        context_depth   = 1,
-        conf_threshold  = 2,
-        max_conf        = 7,
-    )
+# WideO3CPUWithVP built dynamically below after args parsed
 
+# ---------------------------------------------------------------------------
+# Arguments
+# ---------------------------------------------------------------------------
 parser = argparse.ArgumentParser()
 parser.add_argument("binary",
                     help="Path to the benchmark binary (static ELF)")
@@ -105,15 +108,20 @@ parser.add_argument("--context_depth", type=int, default=1,
                     help="Markov context depth (default: 1)")
 parser.add_argument("--conf_threshold", type=int, default=1,
                     help="Confidence threshold to predict (default: 1)")
+parser.add_argument("--max_conf", type=int, default=15,
+                    help="Saturating counter ceiling (default: 15 = 4-bit)")
 args = parser.parse_args()
 
+# ---------------------------------------------------------------------------
+# Build and run
+# ---------------------------------------------------------------------------
 if args.value_pred:
     class WideO3CPUWithVP(WideO3CPU):
         value_pred = MarkovLVP(
             table_size      = 4096,
             context_depth   = args.context_depth,
             conf_threshold  = args.conf_threshold,
-            max_conf        = 7,
+            max_conf        = args.max_conf,
         )
     _cpu_model = WideO3CPUWithVP
 else:
